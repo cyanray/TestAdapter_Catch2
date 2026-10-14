@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="VSTestAdapterCatch2.73ba8471-3771-47bf-bd23-49a1ba09af89" Version="2.0.0" Language="en-US" Publisher="Johnny Hendriks" />
-        <DisplayName>Test Adapter for Catch2</DisplayName>
+        <Identity Id="VSTestAdapterCatch2.73ba8471-3771-47bf-bd23-49a1ba09af89" Version="2.1.0" Language="en-US" Publisher="cyanray" />
+        <DisplayName>Test Adapter for Catch2 (Open Folder fork)</DisplayName>
         <Description xml:space="preserve">Test Adapter for use with the Catch2 C++ unit test framework.</Description>
-        <MoreInfo>https://github.com/JohnnyHendriks/TestAdapter_Catch2</MoreInfo>
+        <MoreInfo>https://github.com/cyanray/TestAdapter_Catch2</MoreInfo>
         <License>LICENSE.txt</License>
         <ReleaseNotes>RELEASENOTES.txt</ReleaseNotes>
         <Icon>TestIcon.png</Icon>
         <Tags>C++, Unit Test, Catch2, Test Adapter</Tags>
     </Metadata>
     <Installation>
-        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0, 17.0)" />
-        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[18.0, 19.0)">
             <ProductArchitecture>amd64</ProductArchitecture>
         </InstallationTarget>
     </Installation>
@@ -22,6 +21,7 @@
     <Assets>
         <Asset Type="UnitTestExtension" d:Source="Project" d:ProjectName="Catch2TestAdapter" Path="|Catch2TestAdapter|" AssemblyName="|Catch2TestAdapter;AssemblyName|" />
         <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="Project" d:ProjectName="Catch2Interface" Path="|Catch2Interface|" AssemblyName="|Catch2Interface;AssemblyName|" />
+        <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="Catch2OpenFolder" Path="|Catch2OpenFolder|" />
     </Assets>
     <Prerequisites>
         <Prerequisite Id="Microsoft.VisualStudio.Component.VC.CoreIde" Version="[15.6.27406.0,)" DisplayName="Visual Studio C++ core features" />

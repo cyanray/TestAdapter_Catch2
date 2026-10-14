@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <ProjectGuid>{7FDCE65B-A463-4CDD-991F-24820484405B}</ProjectGuid>
+    <LangVersion>7.3</LangVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <VsInstallRoot Condition="'$(VsInstallRoot)' == ''">$(VSINSTALLDIR)</VsInstallRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Collections.Immutable">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/PublicAssemblies/System.Collections.Immutable.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Workspace">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/OpenFolder/Microsoft.VisualStudio.Workspace.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Workspace.VSIntegration.Contracts">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/OpenFolder/Microsoft.VisualStudio.Workspace.VSIntegration.Contracts.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Threading">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/PublicAssemblies/Microsoft.VisualStudio.Threading.17.x/Microsoft.VisualStudio.Threading.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.TestWindow.Interfaces">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/TestWindow/Microsoft.VisualStudio.TestWindow.Interfaces.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.TestPlatform.ObjectModel">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/Extensions/TestPlatform/Microsoft.VisualStudio.TestPlatform.ObjectModel.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <ProjectReference Include="../Catch2Interface/Catch2Interface.csproj" />
+  </ItemGroup>
+</Project>

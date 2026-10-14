@@ -1,4 +1,4 @@
-﻿/** Basic Info **
+/** Basic Info **
 
 Copyright: 2018 Johnny Hendriks
 
@@ -28,6 +28,7 @@ Class :
             var vstestcase = new TestCase(testcase.Name, executorUri, testcase.Source);
             vstestcase.CodeFilePath = testcase.Filename;
             vstestcase.LineNumber = testcase.Line;
+            vstestcase.Traits.Add(new Trait("Adapter", "Catch2"));
             foreach( var tag in testcase.Tags)
             {
                 vstestcase.Traits.Add(new Trait("Tag", tag));

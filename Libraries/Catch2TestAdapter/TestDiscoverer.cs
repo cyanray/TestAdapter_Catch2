@@ -1,4 +1,4 @@
-﻿/** Basic Info **
+/** Basic Info **
 
 Copyright: 2018 Johnny Hendriks
 
@@ -45,7 +45,7 @@ namespace Catch2TestAdapter
             _pid = Process.GetCurrentProcess().Id;
 
             // Retrieve Catch2Adapter settings
-            if( !UpdateSettings() )
+            if( !UpdateSettings(sources) )
             {
                 LogNormal(TestMessageLevel.Error, Resources.ErrorStrings.SettingsMissingDiscovery);
                 return;
@@ -96,11 +96,11 @@ namespace Catch2TestAdapter
             LogDebug(TestMessageLevel.Informational, "Finished adding test cases to discovery sink");
         }
 
-        private bool UpdateSettings()
+        private bool UpdateSettings(IEnumerable<string> sources)
         {
             var settingsprovider = _discoveryContext?.RunSettings?.GetSettings(Catch2Interface.Constants.SettingsName) as SettingsProvider;
 
-            _settings = settingsprovider?.Catch2Settings;
+            _settings = settingsprovider?.Catch2Settings ?? Catch2Interface.OpenFolderConfiguration.FindSettings(sources);
 
             return _settings != null;
         }

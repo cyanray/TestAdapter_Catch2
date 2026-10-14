@@ -1,4 +1,4 @@
-﻿/** Basic Info **
+/** Basic Info **
 
 Copyright: 2018 Johnny Hendriks
 
@@ -57,7 +57,7 @@ namespace Catch2TestAdapter
             _pid = Process.GetCurrentProcess().Id;
 
             // Retrieve Catch2Adapter settings
-            if( !UpdateSettings() )
+            if( !UpdateSettings(tests.Select(test => test.Source)) )
             {
                 LogNormal(TestMessageLevel.Error, Resources.ErrorStrings.SettingsMissingExecutor);
                 SkipTests(tests);
@@ -87,7 +87,7 @@ namespace Catch2TestAdapter
             _pid = Process.GetCurrentProcess().Id;
 
             // Retrieve Catch2Adapter settings
-            if( !UpdateSettings() )
+            if( !UpdateSettings(sources) )
             {
                 LogNormal(TestMessageLevel.Error, Resources.ErrorStrings.SettingsMissingExecutor);
                 return;
@@ -449,11 +449,11 @@ namespace Catch2TestAdapter
             }
         }
 
-        private bool UpdateSettings()
+        private bool UpdateSettings(IEnumerable<string> sources)
         {
             var settingsprovider = _runContext?.RunSettings?.GetSettings(Catch2Interface.Constants.SettingsName) as SettingsProvider;
 
-            _settings = settingsprovider?.Catch2Settings;
+            _settings = settingsprovider?.Catch2Settings ?? Catch2Interface.OpenFolderConfiguration.FindSettings(sources);
             _executor = new Catch2Interface.Executor(_settings, _runContext.SolutionDirectory, _runContext.TestRunDirectory);
 
             return _settings != null;
