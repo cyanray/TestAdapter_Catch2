@@ -2,7 +2,7 @@
 
 This fork adds opt-in **Open Folder / CMake workspace support for Visual Studio 2026**.
 See [Open Folder configuration and validation](Docs/OpenFolder.md) for installation,
-root runsettings, source navigation, and CTest filtering. The fork package retains
+root runsettings, source navigation, and automatic CTest deduplication. The fork package retains
 the upstream extension identity and upgrades it within the selected VS profile.
 
 Within Visual Studio, the Test Explorer is a convenient way to run and debug unit tests. This test adapter adds support for the [Catch2 C++ test framework](https://github.com/catchorg/Catch2) (version 2.x and 3.x). This adapter is for use in combination with Visual Studio 2017 and later.

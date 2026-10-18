@@ -1,3 +1,21 @@
+Release Notes for v2.1.2 (Open Folder fork) of the Test Adapter for Catch2
+# New features
+- Support *, ? and whole-segment ** directory patterns in SearchDirectory.
+- Add ActiveConfigurationOnly to limit IDE discovery to the selected VS configuration's build directory.
+- Allow SearchDirectory to be omitted when using the active VS build directory; explicit patterns are optional restrictions.
+- Refresh discovery when the VS workspace configuration changes.
+- Keep existing literal-directory and all-directory behavior when the new option is omitted.
+
+Release Notes for v2.1.1 (Open Folder fork) of the Test Adapter for Catch2
+# New features
+- Add opt-in Open Folder / CMake test discovery for Visual Studio 2026.
+- Route configured Catch2 executables away from duplicate generic CTest entries in Test Explorer.
+- Preserve unrelated CTest tests and all command-line CTest registrations.
+# Configuration
+- Enable OpenFolder and configure SearchDirectory in the workspace root .runsettings.
+- Reopen the folder after changing OpenFolder enablement to refresh CMake test ownership.
+- Retain the original publisher attribution and mark the package as an Open Folder fork.
+
 Release Notes for v2.0.0 of the Test Adapter for Catch2
 This is a big release that adds some features to make some common use cases easier to work with. Most notably is the ability to directly use a dll as a test source, which allows Test Explorer to pick up on changes to the tests and re-discover tests without the need to jump through hoops.
 # New features

@@ -10,12 +10,16 @@ using Catch2Interface;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestWindow.Extensibility;
 using Microsoft.VisualStudio.Workspace.VSIntegration.Contracts;
+using Microsoft.VisualStudio.Workspace.ExternalBuildFramework.Impl.TestExplorer;
+using Microsoft.VisualStudio.Workspace.ExternalBuildFramework.Services;
 
 namespace Catch2OpenFolder
 {
     [Export(typeof(ITestContainerDiscoverer))]
+    [Export(typeof(ISubordinateContainerDiscoverer))]
+    [Export(typeof(IConfigurationListener))]
     [PartCreationPolicy(CreationPolicy.Shared)]
-    public sealed class WorkspaceTestContainerDiscoverer : ITestContainerDiscoverer, IDisposable
+    public sealed class WorkspaceTestContainerDiscoverer : ISubordinateContainerDiscoverer, IConfigurationListener, IDisposable
     {
         private readonly IVsFolderWorkspaceService workspaceService;
         private readonly object sync = new object();
@@ -82,7 +86,10 @@ namespace Catch2OpenFolder
         }
         private void FileChanged(object sender, FileSystemEventArgs args)
         {
-            if (args.FullPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
+            if (args.FullPath.EndsWith("ProjectSettings.json", StringComparison.OrdinalIgnoreCase) ||
+                args.FullPath.EndsWith("CMakePresets.json", StringComparison.OrdinalIgnoreCase) ||
+                args.FullPath.EndsWith("CMakeUserPresets.json", StringComparison.OrdinalIgnoreCase) ||
+                args.FullPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
                 args.FullPath.EndsWith(".runsettings", StringComparison.OrdinalIgnoreCase) ||
                 args.ChangeType == WatcherChangeTypes.Renamed ||
                 args.ChangeType == WatcherChangeTypes.Created ||
@@ -117,7 +124,8 @@ namespace Catch2OpenFolder
                 }
                 var configuration = string.IsNullOrEmpty(workspaceRoot)
                     ? null : OpenFolderConfiguration.Load(workspaceRoot);
-                var executables = configuration?.FindExecutables() ?? new string[0];
+                var activeBuildDirectories = configuration == null ? null : GetActiveBuildDirectories(configuration);
+                var executables = configuration?.FindExecutables(activeBuildDirectories) ?? new string[0];
                 var newFingerprint = (configuration?.SettingsTimestamp.Ticks.ToString() ?? "") + "|" +
                     string.Join("|", executables.Select(path => path + ":" +
                         File.GetLastWriteTimeUtc(path).Ticks + ":" + new FileInfo(path).Length));
@@ -134,7 +142,8 @@ namespace Catch2OpenFolder
                     // Explicit external directories receive their own watcher.
                     DisposeWatchers();
                     if (!string.IsNullOrEmpty(root) && Directory.Exists(root)) Watch(root);
-                    foreach (var directory in configuration?.SearchDirectories ?? new string[0])
+                    foreach (var directory in (configuration?.WatchDirectories ?? new string[0])
+                        .Concat(activeBuildDirectories ?? new string[0]).Distinct(StringComparer.OrdinalIgnoreCase))
                     {
                         if (Directory.Exists(directory) && !IsUnderRoot(directory, root)) Watch(directory);
                     }
@@ -153,6 +162,67 @@ namespace Catch2OpenFolder
             }
             finally { Interlocked.Exchange(ref refreshing, 0); }
         }
+        public void OnUpdated(ConfigurationUpdateEventArgs args) => ScheduleRefresh();
+        public void OnFilterChanged(ConfigurationFilterChangedEventArgs args) => ScheduleRefresh();
+        public Task OnSwitchAsync(ConfigurationSwitchEventArgs args)
+        {
+            ScheduleRefresh();
+            return Task.CompletedTask;
+        }
+
+        private IEnumerable<string> GetActiveBuildDirectories(OpenFolderConfiguration configuration)
+        {
+            if (!configuration.ActiveConfigurationOnly) return null;
+            try
+            {
+                var workspace = workspaceService.CurrentWorkspace;
+                var service = workspace?.GetService(typeof(IConfigurationService)) as IConfigurationService;
+                if (service == null || !service.TryGetActiveConfigurations(out var configurations)) return new string[0];
+                return configurations.Select(config => config.GenOutputDirectory)
+                    .Where(path => !string.IsNullOrEmpty(path)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            }
+            catch (ObjectDisposedException)
+            {
+                return new string[0];
+            }
+        }
+
+        // Let the CMake/EBF discoverer route matching executables to this adapter
+        // instead of also emitting its generic CTest containers for those tests.
+        public SubordinateContainerType SubordinateContainerType => SubordinateContainerType.Unknown;
+        public string NotifyHintFile => string.Empty;
+        public Task<bool> IsAvailableAsync() => Task.FromResult(true);
+        public Task<bool> LoadAsync() => Task.FromResult(true);
+
+        public bool IsPotentiallyOwned(string executable)
+        {
+            string workspaceRoot;
+            lock (sync)
+            {
+                if (disposed) return false;
+                workspaceRoot = root;
+            }
+            if (string.IsNullOrEmpty(workspaceRoot)) return false;
+            try
+            {
+                var configuration = OpenFolderConfiguration.Load(workspaceRoot);
+                return configuration != null && configuration.FindExecutables(GetActiveBuildDirectories(configuration))
+                    .Contains(Path.GetFullPath(executable), StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Exception error) when (error is IOException || error is UnauthorizedAccessException ||
+                error is System.Xml.XmlException || error is ArgumentException)
+            {
+                Trace.TraceWarning("Catch2 Open Folder ownership: " + error.Message);
+                return false;
+            }
+        }
+
+        public void UpdateSources(IEnumerable<TestSource> sources, Microsoft.VisualStudio.Workspace.IWorkspace workspace)
+        {
+            // Discovery stays scoped to the explicit OpenFolder search directories.
+            ScheduleRefresh();
+        }
+
         private static bool IsUnderRoot(string directory, string workspaceRoot)
         {
             return string.Equals(directory, workspaceRoot, StringComparison.OrdinalIgnoreCase) ||
