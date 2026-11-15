@@ -61,9 +61,6 @@ validation. After enabling/disabling OpenFolder in an already-open workspace,
 reopen the folder to refresh the CMake provider's ownership.
 Invalid or disabled configuration leaves ownership with CTest.
 
-Catch2 tests also carry the `Adapter=Catch2` trait, which remains available as an
-optional `Trait:Catch2` search filter in mixed-framework workspaces.
-
 ## Build
 
 Build on Windows with Visual Studio 2026's MSBuild. Set `VsInstallRoot` to the
@@ -96,7 +93,6 @@ experimental configuration:
 - Discovered and passed 19 tests from the four real SurfVisual Catch2 executables.
 - Double-clicking Catch2 tests opened their original source files at the test line.
 - A separate built-in CTest smoke test remained available; all 20 tests passed.
-- `Trait:Catch2` displayed 19/20 tests, excluding the CTest test.
 - Changing the root filename filter to Base only automatically reduced discovery
   to one Catch2 test; restoring the filter restored all 19.
 - All 12 configuration/scanner regression tests passed.
