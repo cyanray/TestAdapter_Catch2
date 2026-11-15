@@ -1,3 +1,7 @@
+Release Notes for v2.1.7 (Open Folder fork) of the Test Adapter for Catch2
+# Bug fixes
+- Remove the automatically added Adapter[Catch2] trait. Tags declared in Catch2 tests remain visible.
+
 Release Notes for v2.1.6 (CodeLens multiline fix) of the Test Adapter for Catch2
 # Bug fixes
 - Anchor CodeLens above the start of multiline TEST_CASE and related Catch2 test macros.
