@@ -16,6 +16,7 @@ using Microsoft.VisualStudio.Workspace.ExternalBuildFramework.Services;
 namespace Catch2OpenFolder
 {
     [Export(typeof(ITestContainerDiscoverer))]
+    [Export(typeof(WorkspaceTestContainerDiscoverer))]
     [Export(typeof(ISubordinateContainerDiscoverer))]
     [Export(typeof(IConfigurationListener))]
     [PartCreationPolicy(CreationPolicy.Shared)]
@@ -32,6 +33,12 @@ namespace Catch2OpenFolder
         private bool disposed;
         private int refreshing;
         private string fingerprint;
+        private Catch2Interface.TestCase[] codeLensTests = new Catch2Interface.TestCase[0];
+        internal event EventHandler CodeLensTestsUpdated;
+        internal Catch2Interface.TestCase[] CodeLensTests
+        {
+            get { lock (sync) { return codeLensTests.ToArray(); } }
+        }
 
         [ImportingConstructor]
         public WorkspaceTestContainerDiscoverer(IVsFolderWorkspaceService workspaceService)
@@ -63,10 +70,12 @@ namespace Catch2OpenFolder
                 root = workspaceService.CurrentWorkspace?.Location;
                 fingerprint = null;
                 containers = new ITestContainer[0];
+                codeLensTests = new Catch2Interface.TestCase[0];
                 if (!string.IsNullOrEmpty(root) && Directory.Exists(root)) Watch(root);
                 refreshTimer.Change(100, Timeout.Infinite);
             }
             TestContainersUpdated?.Invoke(this, EventArgs.Empty);
+            CodeLensTestsUpdated?.Invoke(this, EventArgs.Empty);
         }
         private void Watch(string directory)
         {
@@ -149,6 +158,15 @@ namespace Catch2OpenFolder
                     }
                 }
                 TestContainersUpdated?.Invoke(this, EventArgs.Empty);
+                // Experimental source tags reuse VS's built-in TestStatus provider.
+                // Discovery runs on the refresh worker, never on the editor thread.
+                var tests = DiscoverCodeLensTests(configuration, executables);
+                lock (sync)
+                {
+                    if (disposed || workspaceGeneration != generation) return;
+                    codeLensTests = tests;
+                }
+                CodeLensTestsUpdated?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception error) when (error is IOException || error is UnauthorizedAccessException ||
                 error is System.Xml.XmlException || error is ArgumentException)
@@ -156,12 +174,37 @@ namespace Catch2OpenFolder
                 Trace.TraceWarning("Catch2 Open Folder: " + error.Message);
                 lock (sync)
                 {
-                    if (!disposed) { fingerprint = null; containers = new ITestContainer[0]; }
+                    if (!disposed) { fingerprint = null; containers = new ITestContainer[0]; codeLensTests = new Catch2Interface.TestCase[0]; }
                 }
                 TestContainersUpdated?.Invoke(this, EventArgs.Empty);
+                CodeLensTestsUpdated?.Invoke(this, EventArgs.Empty);
             }
             finally { Interlocked.Exchange(ref refreshing, 0); }
         }
+        private static Catch2Interface.TestCase[] DiscoverCodeLensTests(
+            OpenFolderConfiguration configuration, IEnumerable<string> executables)
+        {
+            var tests = new List<Catch2Interface.TestCase>();
+            if (configuration?.CodeLensEnabled != true) return tests.ToArray();
+            foreach (var executable in executables)
+            {
+                try
+                {
+                    tests.AddRange(new Catch2Interface.Discoverer(configuration.Settings)
+                        .GetTests(new[] { executable }));
+                }
+                catch (Exception error) when (error is IOException || error is UnauthorizedAccessException ||
+                    error is System.ComponentModel.Win32Exception || error is InvalidOperationException ||
+                    error is ArgumentException || error is System.Xml.XmlException || error is AggregateException)
+                {
+                    // A locked, removed, or invalid binary must not crash VS's timer
+                    // thread or prevent Test Explorer from discovering other sources.
+                    Trace.TraceWarning("Catch2 CodeLens discovery: " + error.Message);
+                }
+            }
+            return tests.ToArray();
+        }
+
         public void OnUpdated(ConfigurationUpdateEventArgs args) => ScheduleRefresh();
         public void OnFilterChanged(ConfigurationFilterChangedEventArgs args) => ScheduleRefresh();
         public Task OnSwitchAsync(ConfigurationSwitchEventArgs args)

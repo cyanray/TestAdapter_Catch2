@@ -282,33 +282,10 @@ namespace Catch2TestAdapter
                 SkipTests(groupedtests);
             }
 
-            // Run tests
-            if (_runContext.IsBeingDebugged)
-            {
-                string caselistfilename = _executor.MakeCaselistFilename(testcasegroup.Source);
-
-                // Prepare testcase list file
-                _executor.CreateTestcaseListFile(testcasegroup, caselistfilename);
-
-                LogVerbose(TestMessageLevel.Informational, "Start debug run.");
-                _frameworkHandle
-                    .LaunchProcessWithDebuggerAttached( testcasegroup.Source
-                                                      , _executor.WorkingDirectory(testcasegroup.Source)
-                                                      , _executor.GenerateCommandlineArguments_Combined_Dbg(settings_src, caselistfilename)
-                                                      , settings_src.GetEnviromentVariablesForDebug());
-
-                // Do not process output in Debug mode
-                foreach(var test in groupedtests)
-                {
-                    TestResult result = new TestResult(test);
-                    result.Outcome = TestOutcome.None;
-                    _frameworkHandle.RecordResult(result);
-                }
-                return;
-            }
-
             LogVerbose(TestMessageLevel.Informational, $"Run {testcasegroup.Names.Count} grouped testcases.");
-            var testresults = _executor.Run(testcasegroup);
+            var testresults = _runContext.IsBeingDebugged
+                ? _executor.RunDebug(testcasegroup, _frameworkHandle.LaunchProcessWithDebuggerAttached)
+                : _executor.Run(testcasegroup);
 
             if (!string.IsNullOrEmpty(_executor.Log))
             {
@@ -325,7 +302,13 @@ namespace Catch2TestAdapter
                 TestResult result = new TestResult(test);
                 if(testresult == null)
                 {
-                    if(testresults.TimedOut)
+                    if (_runContext.IsBeingDebugged)
+                    {
+                        // A stopped/crashed debug session must not re-launch tests.
+                        result.Outcome = _cancelled ? TestOutcome.Skipped : TestOutcome.None;
+                        _frameworkHandle.RecordResult(result);
+                    }
+                    else if(testresults.TimedOut)
                     {
                         LogDebug(TestMessageLevel.Informational, $"Combined testcase result not found for: {test.DisplayName}");
                         result.Outcome = TestOutcome.Skipped; // When test result not found, probably a timeout occurred and the test was skipped as a result.
@@ -406,33 +389,14 @@ namespace Catch2TestAdapter
 
             var settings_src = _settings.GetSourceSettings(test.Source);
 
-            // Run test
-            if (_runContext.IsBeingDebugged)
+            var testresult = _runContext.IsBeingDebugged
+                ? _executor.RunDebug(test.DisplayName, test.Source, _frameworkHandle.LaunchProcessWithDebuggerAttached)
+                : _executor.Run(test.DisplayName, test.Source);
+            if (!string.IsNullOrEmpty(_executor.Log))
             {
-                LogVerbose(TestMessageLevel.Informational, "Start debug run.");
-                _frameworkHandle
-                    .LaunchProcessWithDebuggerAttached( test.Source
-                                                      , _executor.WorkingDirectory(test.Source)
-                                                      , _executor.GenerateCommandlineArguments_Single_Dbg(settings_src, test.DisplayName)
-                                                      , settings_src.GetEnviromentVariablesForDebug() );
-
-                // Do not process output in Debug mode
-                result.Outcome = TestOutcome.None;
-                _frameworkHandle.RecordResult(result);
-                return;
+                LogNormal(TestMessageLevel.Informational, $"Executor log:{Environment.NewLine}{_executor.Log}");
             }
-            else
-            {
-                var testresult = _executor.Run(test.DisplayName, test.Source);
-                
-                if(!string.IsNullOrEmpty(_executor.Log))
-                {
-                    LogNormal(TestMessageLevel.Informational, $"Executor log:{Environment.NewLine}{_executor.Log}");
-                }
-
-                // Process test results
-                RecordTestResult(result, testresult);
-            }
+            RecordTestResult(result, testresult);
 
             LogVerbose(TestMessageLevel.Informational, $"Finished test: {test.FullyQualifiedName}");
         }

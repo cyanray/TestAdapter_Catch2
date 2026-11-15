@@ -1,3 +1,17 @@
+Release Notes for v2.1.6 (CodeLens multiline fix) of the Test Adapter for Catch2
+# Bug fixes
+- Anchor CodeLens above the start of multiline TEST_CASE and related Catch2 test macros.
+- Ignore comments, quoted/raw strings and nested parentheses while locating declarations.
+- Track only the anchor character so wrapping macro arguments cannot move CodeLens between lines.
+
+Release Notes for v2.1.5 (CodeLens experiment) of the Test Adapter for Catch2
+# Experimental features
+- Add opt-in OpenFolder/CodeLens source tags for discovered Catch2 tests.
+- Reuse Visual Studio TestStatus CodeLens for individual Run, Debug, and test results.
+- Collect executable debug-run XML results after the debugger exits instead of resetting to Not Run.
+- Include a reproducible two-test native debugging and failure/recovery fixture.
+- CodeLens is disabled by default and currently validated only on VS Community 2026.
+
 Release Notes for v2.1.2 (Open Folder fork) of the Test Adapter for Catch2
 # New features
 - Support *, ? and whole-segment ** directory patterns in SearchDirectory.

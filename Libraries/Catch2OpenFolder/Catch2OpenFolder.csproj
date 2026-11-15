@@ -8,6 +8,34 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="Microsoft.VisualStudio.CoreUtility">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/Editor/Microsoft.VisualStudio.CoreUtility.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Language">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/Editor/Microsoft.VisualStudio.Language.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.Data">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/Editor/Microsoft.VisualStudio.Text.Data.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.Logic">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/Editor/Microsoft.VisualStudio.Text.Logic.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.UI">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/Editor/Microsoft.VisualStudio.Text.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Text.UI.Wpf">
+      <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/Editor/Microsoft.VisualStudio.Text.UI.Wpf.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
     <Reference Include="Microsoft.VisualStudio.Workspace.ExternalBuildFramework.Impl">
       <HintPath>$(VsInstallRoot)/Common7/IDE/CommonExtensions/Microsoft/EBF/Microsoft.VisualStudio.Workspace.ExternalBuildFramework.Impl.dll</HintPath>
       <Private>false</Private>

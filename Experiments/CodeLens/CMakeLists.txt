@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.28)
+project(Catch2CodeLensExperiment LANGUAGES CXX)
+add_executable(Catch2CodeLensTests tests.cpp)
+target_compile_features(Catch2CodeLensTests PRIVATE cxx_std_17)
+target_include_directories(Catch2CodeLensTests PRIVATE "${CMAKE_CURRENT_LIST_DIR}/../../ReferenceTests/src/catch2/v2.13.10")
+set_target_properties(Catch2CodeLensTests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")

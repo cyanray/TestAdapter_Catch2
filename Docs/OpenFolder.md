@@ -71,7 +71,8 @@ and Test Window contracts without bundling VS host assemblies:
 & "$env:VSINSTALLDIR/MSBuild/Current/Bin/amd64/MSBuild.exe" `
   VSIX/VSTestAdapterCatch2/VSTestAdapterCatch2.csproj -restore `
   /p:Configuration=Release "/p:VsInstallRoot=$env:VSINSTALLDIR" `
-  /p:DeployExtension=false
+  /p:DeployExtension=false `
+  "/p:VSToolsPath=$env:USERPROFILE/.nuget/packages/microsoft.vssdk.buildtools/18.9.820/tools"
 ```
 
 The installable artifact is
@@ -166,3 +167,8 @@ The package builds successfully and all 25 scanner/configuration regression test
 pass, including pattern matching, missing/future directories, scope changes,
 deduplication and fallback settings. Version 2.1.2 has not been installed in the
 user's VS profile; preset switching in the IDE still needs runtime validation.
+## Experimental source CodeLens (2.1.5)
+
+Set `<CodeLens>true</CodeLens>` within `<OpenFolder>` to enable source test
+status indicators with Run and Debug actions. See the [experiment report](CodeLens.md)
+for setup, verified behavior, and scope. This remains disabled by default.

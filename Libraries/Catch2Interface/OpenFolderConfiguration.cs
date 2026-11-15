@@ -18,6 +18,7 @@ namespace Catch2Interface
         public IReadOnlyList<string> WatchDirectories { get; private set; }
         public bool ActiveConfigurationOnly { get; private set; }
         public bool HasSearchPatterns { get; private set; }
+        public bool CodeLensEnabled { get; private set; }
         public string TargetPlatform { get; private set; }
         public DateTime SettingsTimestamp { get; private set; }
 
@@ -65,6 +66,7 @@ namespace Catch2Interface
                 WatchDirectories = watchDirectories,
                 ActiveConfigurationOnly = activeOnly,
                 HasSearchPatterns = patterns.Length != 0,
+                CodeLensEnabled = bool.TryParse(adapter.SelectSingleNode("OpenFolder/CodeLens")?.InnerText, out var codeLens) && codeLens,
                 TargetPlatform = document.SelectSingleNode("/RunSettings/RunConfiguration/TargetPlatform")?.InnerText,
                 SettingsTimestamp = File.GetLastWriteTimeUtc(settingsFile)
             };

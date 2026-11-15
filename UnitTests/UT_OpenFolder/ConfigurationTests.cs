@@ -42,6 +42,29 @@ namespace UT_OpenFolder
             return Path.GetFullPath(path);
         }
         [TestMethod]
+        public void CodeLensRequiresExplicitOptIn()
+        {
+            WriteSettings();
+            Assert.IsFalse(OpenFolderConfiguration.Load(root).CodeLensEnabled);
+            foreach (var value in new[] { "false", "invalid" })
+            {
+                WriteSettings(directories: "<SearchDirectory>bin</SearchDirectory><CodeLens>" + value + "</CodeLens>");
+                Assert.IsFalse(OpenFolderConfiguration.Load(root).CodeLensEnabled);
+            }
+        }
+
+        [TestMethod]
+        public void CodeLensCanBeEnabledWithoutChangingContainerScope()
+        {
+            var expected = AddFile("bin/SurfVisual.Base.UnitTest.exe");
+            AddFile("other/SurfVisual.Scene.UnitTest.exe");
+            WriteSettings(directories: "<SearchDirectory>bin</SearchDirectory><CodeLens>true</CodeLens>");
+            var configuration = OpenFolderConfiguration.Load(root);
+            Assert.IsTrue(configuration.CodeLensEnabled);
+            CollectionAssert.AreEqual(new[] { expected }, configuration.FindExecutables().ToArray());
+        }
+
+        [TestMethod]
         public void MissingConfigurationDoesNotEnableDiscovery()
         {
             AddFile("bin/SurfVisual.Base.UnitTest.exe");

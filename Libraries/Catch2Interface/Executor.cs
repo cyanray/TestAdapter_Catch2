@@ -1,4 +1,4 @@
-﻿/** Basic Info **
+/** Basic Info **
 
 Copyright: 2018 Johnny Hendriks
 
@@ -127,6 +127,74 @@ Class :
             else
             {
                 return $"--reporter xml --durations yes --input-file {"\""}{caselistfilename}{"\""}";
+            }
+        }
+
+        // The VS debugger launch API returns a PID before the user finishes
+        // stepping. Keep the test run alive and read Catch2's report on exit.
+        public TestResult RunDebug(string testname, string source,
+            Func<string, string, string, IDictionary<string, string>, int> launch)
+        {
+            var settings = _settings.GetSourceSettings(source);
+            var report = MakeReportFilename(source);
+            try
+            {
+                var arguments = GenerateCommandlineArguments_Single(testname, report)
+                    + (settings.DebugBreak ? " --break" : string.Empty);
+                WaitForDebugProcess(source, arguments, settings, launch);
+                return _cancelled ? new TestResult()
+                    : new TestResult(ReadReport(report), testname, settings, false);
+            }
+            finally
+            {
+                if (settings.LoggingLevel != LoggingLevels.Debug) TryDeleteFile(settings, report);
+            }
+        }
+
+        public XmlOutput RunDebug(TestCaseGroup group,
+            Func<string, string, string, IDictionary<string, string>, int> launch)
+        {
+            var settings = _settings.GetSourceSettings(group.Source);
+            var report = MakeReportFilename(group.Source);
+            var cases = MakeCaselistFilename(group.Source);
+            try
+            {
+                CreateTestcaseListFile(group, cases);
+                var arguments = GenerateCommandlineArguments_Combined(cases, report)
+                    + (settings.DebugBreak ? " --break" : string.Empty);
+                WaitForDebugProcess(group.Source, arguments, settings, launch);
+                return new XmlOutput(ReadReport(report), false, settings);
+            }
+            finally
+            {
+                if (settings.LoggingLevel != LoggingLevels.Debug)
+                {
+                    TryDeleteFile(settings, report);
+                    TryDeleteFile(settings, cases);
+                }
+            }
+        }
+
+        private void WaitForDebugProcess(string source, string arguments, Settings settings,
+            Func<string, string, string, IDictionary<string, string>, int> launch)
+        {
+            if (_cancelled) return;
+            var processId = launch(source, WorkingDirectory(source), arguments,
+                settings.GetEnviromentVariablesForDebug());
+            Process process;
+            try { process = Process.GetProcessById(processId); }
+            catch (ArgumentException) { return; } // It may already have completed.
+            using (process)
+            {
+                // Ordinary execution timeouts must not expire at a breakpoint.
+                while (!process.WaitForExit(100))
+                {
+                    if (!System.Threading.Volatile.Read(ref _cancelled)) continue;
+                    try { process.Kill(); }
+                    catch (InvalidOperationException) { }
+                    process.WaitForExit();
+                    break;
+                }
             }
         }
 
